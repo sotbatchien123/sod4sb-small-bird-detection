@@ -35,3 +35,7 @@ __pycache__/
 *.pyc
 .cache/
 *.log
+
+# Springer Nature template files (LPPL; get them from the Springer Nature template package)
+paper/sn-jnl.cls
+paper/*.bst

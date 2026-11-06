@@ -35,6 +35,7 @@ PREAMBLE = r"""\documentclass[5p,a4paper]{elsarticle}
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{multirow}
 \usepackage{xurl}        % URLs may break anywhere (narrow 5p columns)
 \usepackage{tikz}
@@ -56,10 +57,12 @@ FRONT = r"""\begin{frontmatter}
 \title{TITLE}
 
 \author[fpt]{Vũ Quốc Đạt}
+\ead{qd130506@gmail.com}
 \author[fpt]{Nguyễn Gia Phúc}
+\ead{phucoik@gmail.com}
 \author[fpt]{Ngô Ngọc Trường Sơn\corref{cor1}}
 \cortext[cor1]{Corresponding author.}
-% \ead{...}   % e-mail of the corresponding author: required by Elsevier before submission
+\ead{truongsonks2006@gmail.com}
 \affiliation[fpt]{organization={FPT University},
             city={Da Nang},
             country={Vietnam}}

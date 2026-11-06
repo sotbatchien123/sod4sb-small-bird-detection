@@ -16,6 +16,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{multirow}
 \usepackage{url}
 \usepackage{tikz}
@@ -32,17 +33,20 @@
 \IEEEauthorblockN{Vũ Quốc Đạt}
 \IEEEauthorblockA{DE200522\\
 \textit{FPT University}\\
-Da Nang, Vietnam}
+Da Nang, Vietnam\\
+qd130506@gmail.com}
 \and
 \IEEEauthorblockN{Nguyễn Gia Phúc}
 \IEEEauthorblockA{DE200407\\
 \textit{FPT University}\\
-Da Nang, Vietnam}
+Da Nang, Vietnam\\
+phucoik@gmail.com}
 \and
 \IEEEauthorblockN{Ngô Ngọc Trường Sơn}
 \IEEEauthorblockA{DE200399\\
 \textit{FPT University}\\
-Da Nang, Vietnam}
+Da Nang, Vietnam\\
+truongsonks2006@gmail.com}
 }
 
 \maketitle
@@ -85,7 +89,8 @@ slicing-aided hyper inference (SAHI)~\cite{akyon2022sahi}, test-time augmentatio
 ensembling~\cite{solovyev2021wbf,hou2023ensemble}. These remedies are often combined in challenge solutions,
 but it is rarely shown which of them are complementary and which are redundant under a given pipeline.
 
-This paper answers that question with controlled ablations on SOD4SB. Our main contributions are:
+This paper answers that question with controlled ablations on SOD4SB, and Section~\ref{sec:process} reports how
+the study was carried out on a single laptop GPU, including the problems met on the way. Our main contributions are:
 \begin{itemize}
 \item We compare colour augmentation, copy-paste and exhaustive tile sampling (slicing) on the same
 YOLOv8-M~\cite{jocher2023yolov8} initialisation and schedule, and find that only slicing helps (+9.1 AP50).
@@ -141,7 +146,7 @@ contribution of architectural diversity with a scale-wise analysis.
 \node[op, below=6mm of yolo0] (flip) {plain +\\h-flip};
 \node[model, below=6mm of slice] (yolo) {YOLO\\Slicing-M};
 \node[model, below=6mm of yolo] (gfl) {GFL R50-FPN\\(ep.~38)};
-\node[op, right=8mm of yolo] (wbf) {WBF\\IoU 0.55\\1:1:1};
+\node[op, right=14mm of yolo] (wbf) {WBF\\IoU 0.55\\1:1:1};
 \node[data, right=of wbf] (out) {boxes};
 \draw[arr] (drone) -- (yolo0);
 \draw[arr] (yolo0) -- (slice);
@@ -475,6 +480,97 @@ compute-matched baseline is left for future work. Second, all comparisons use a 
 above its last epoch), which slightly favours GFL and the ensemble. Third, validation
 frames come from the same videos as training frames, so scene-level generalisation is not measured, and the public
 test score was not available to us at the time of writing.
+
+%=====================================================================
+\section{Development Process and Practical Challenges}
+\label{sec:process}
+%=====================================================================
+The project ran for about seven weeks, from mid-September to 6 November 2026, on a single laptop GPU (RTX 5070 Laptop,
+8~GB, Blackwell architecture). Table~\ref{tab:timeline} summarises the phases. This section reports the route that led
+to the final system, including the branches that were abandoned, because several of the design choices of
+Section~\ref{sec:method} were forced by these constraints rather than chosen freely.
+
+\begin{table}[t]
+\caption{Project timeline (2026). AP50 on the validation split of the dataset named in each row.}
+\label{tab:timeline}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{l>{\raggedright\arraybackslash}p{4.1cm}>{\raggedright\arraybackslash}p{1.7cm}}
+\toprule
+Period & Work & Outcome \\
+\midrule
+16--27 Sep & GPU environment; released GFL checkpoint re-evaluated; GFL from scratch on MVA only & 88.9\% (released); 6.1\% after 1 epoch \\
+27 Sep--7 Oct & GFL: Drone2021 6 epochs, then MVA 50 epochs with per-image BN & 74.9\% (MVA) \\
+9--28 Oct & First round of YOLO and Swin experiments (batch of one); discarded on 29 Oct & not used \\
+29--31 Oct & YOLOv8-S on Drone2021: BN failure diagnosed, crop recipe rewritten & 47.4\% (Drone) \\
+31 Oct--1 Nov & YOLOv8-S on MVA (colour augmentation); switch to the M model & 68.8\% (MVA) \\
+1--2 Nov & YOLOv8-M on Drone2021, 10 epochs (Drone2021 re-downloaded) & 44.6\% (Drone) \\
+2--4 Nov & YOLOv8-M: baseline and three data strategies, 30 epochs each & 66.9--79.3\% (MVA) \\
+4 Nov & TTA, SAHI, merging rules, GFL ensemble, error analysis & 84.5\% (MVA) \\
+4--5 Nov & Public-test inference (9{,}699 frames) & submission file \\
+5--6 Nov & Paper, code and weight release & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Pipeline Verification}
+Before any training, the inference and evaluation code was checked against a published number. The GFL checkpoint
+released with the challenge baseline~\cite{kondo2023sod4sb,shinya2022usb}, which is initialised from COCO-pretrained
+weights and processes full 3840$\times$2160 frames, reproduces its reported 47.0\% AP and 88.9\% AP50 (with flip TTA) on the same
+879 validation frames with our code. Our own models are trained without any downloaded weights, a constraint fixed at the
+start of the project; this explains most of the gap to that reference and is the main reason our numbers should not be
+compared with challenge entries. A GFL trained from scratch on MVA alone reached only 6.1\% AP50 after one epoch, which
+led us to pretrain both detectors on Drone2021.
+
+\subsection{Challenges and How They Were Addressed}
+\textbf{A new GPU with old libraries.} The Blackwell GPU (compute capability 12.0) requires PyTorch 2.7 with CUDA 12.8,
+for which no binary build of MMCV~1.6, the basis of the GFL code, exists. We used the pure-Python MMCV with a small
+compatibility layer that replaces its CUDA operators by torchvision NMS, and verified it on six NMS test cases of 1{,}200
+boxes against the original CPU implementation (identical outputs); on two test frames GPU inference was about 19 times faster
+than the CPU fallback. Data-loader worker processes hung on Windows and were disabled for GFL inference.
+
+\textbf{BatchNorm with a batch of one.} Fitting 2560$\times$1440 inputs into 8~GB forced a physical batch of one with
+gradient accumulation. Batch normalisation then normalises each image with its own statistics during training but uses
+running averages at test time. For GFL this was fixed by using per-image normalisation in both training and inference.
+The first YOLO pretraining run suffered from the same mismatch without it being visible in the loss: its validation
+AP50 fell to 3.4\% at epoch~4, while re-evaluating the same weights with per-image statistics on 500 frames gave
+35--37\%. We
+therefore rewrote the YOLO recipe to train on native-resolution 1280$\times$736 crops with real batches (8 for
+YOLOv8-S, 6 for YOLOv8-M), which is also how slicing entered the study. For YOLOv8-M a batch of 8 filled the GPU memory
+and ran at 14.3 images/s; a batch of 6 ran at 18.6 images/s. Mixed-precision overflow occurred 37 times during GFL
+training (10 on Drone2021, 27 on MVA); each time the step was retried with a halved loss scale.
+
+\textbf{Throughput and reliability of a laptop.} Decoding 4K JPEG frames limited YOLO training to 12.3 images/s;
+decoding and crop generation in a thread pool raised this to 25.8 images/s. After a restart, Windows power management
+moved the data-loading threads to efficiency cores and throughput fell to about 10 images/s, until a wrapper disabled
+power throttling for the training process. Training was interrupted by a GPU driver reset, by an application-hang
+termination during validation and by planned shutdowns. All trainers therefore save atomic checkpoints (model,
+optimiser, scaler, random-number state and position in the epoch), and resumption was verified to give exactly the
+same result as uninterrupted training; the hash of the training code is stored with each run, so that a resumed run
+cannot silently use modified code. Public-test inference was first stopped after about 3{,}700 of 9{,}699 frames and
+lost; it was rewritten to save results in chunks of 500 frames.
+
+\textbf{Data.} One exactly duplicated box was removed from the validation labels. Drone2021 and MVA use different box
+conventions (Section~\ref{sec:experiments}), and Drone2021 pretraining overfitted after 4 epochs for YOLOv8-S and 7
+for YOLOv8-M; a second pretraining phase with stronger augmentation did not improve the starting point and was not
+used. Most misses of 32--64~px birds by YOLOv8-S came from three frames with dense flocks (124 of 134 misses). The 63.5~GB of
+Drone2021 images had to be deleted for disk space and downloaded again when we moved from YOLOv8-S to YOLOv8-M.
+
+\textbf{Compute budget and abandoned branches.} With one GPU every experiment delayed the next, so the plan changed
+several times. A first round of YOLO and Swin Transformer experiments (9--28 October; native and upscaled crops,
+NWD loss, DySample upsampling) had been run with a batch of one; on 29 October it was discarded and the YOLO study
+was restarted under one controlled protocol, so none of its results are used here. YOLOv8-S was stopped after one MVA strategy in favour of YOLOv8-M. A YOLOv8-M variant with an additional
+high-resolution P2 head and a combined recipe (slicing, copy-paste and colour augmentation in one run) were prepared and
+tested on the CPU; the combined recipe was started on free cloud T4 GPUs, but both were dropped to meet the deadline.
+Instead, the remaining time went into inference-time methods and the heterogeneous ensemble, which need no further
+training. A missing plain YOLOv8-M baseline was noticed late and trained before the ablation was considered complete.
+
+\subsection{Lessons}
+Three lessons transfer to similar projects. First, verify the evaluation code against a published checkpoint before
+training anything. Second, with small batches, check batch normalisation explicitly: a train/test mismatch can look
+like overfitting. Third, on a single consumer GPU, resumable training with verified exact resumption and pinned code is
+worth its cost, because interruptions are the rule rather than the exception.
 
 %=====================================================================
 \section{Conclusion}
