@@ -17,6 +17,8 @@ ACTIVE_OUTPUT = None
 sys.path.insert(0, str(ROOT/'third_party/UniverseNet'))
 os.environ.setdefault('TORCH_HOME', str(ROOT/'.cache/torch'))
 os.environ.setdefault('MPLCONFIGDIR', str(ROOT/'.cache/matplotlib'))
+sys.path.insert(0, str(ROOT/'scripts'))
+from paths import dump_config
 
 def save_json(path, value):
     tmp=path.with_suffix('.tmp')
@@ -110,7 +112,7 @@ def main():
     for split in ('val','test'):
         cfg.data[split].pipeline[1].img_scale=scale
         cfg.data[split].pipeline[1].flip=False
-    cfg.dump(str(out/'model_config.py'))
+    dump_config(cfg, out/'model_config.py')
     roots={'drone':ROOT/'drone2021','mva':ROOT/'mva2023_sod4bird_train'}
     sources={}
     for name,root in roots.items():
@@ -136,7 +138,7 @@ def main():
     if args.mva_per_image_bn:
         spec['stages'][1]['normalization']='per-image BatchNorm; batch_size=1; running buffers unused; train/eval identical'
     cfg.local_bn_policy_by_stage={s['name']:s.get('normalization','standard BatchNorm') for s in spec['stages']}
-    cfg.dump(str(out/'model_config.py'))
+    dump_config(cfg, out/'model_config.py')
     if args.resume:
         previous_spec=json.loads((out/'experiment.json').read_text(encoding='utf-8'))
         requested_spec=json.loads(json.dumps(spec))

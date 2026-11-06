@@ -29,6 +29,7 @@ from ultralytics.utils.ops import non_max_suppression
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from atomic_status_io import atomic_json
+from paths import rel
 from yolo_scale_views import xyxy, intersect
 from drone_baseline_data import image_path
 
@@ -230,7 +231,7 @@ def main():
             tensor_allocated_mib=torch.cuda.memory_allocated()/2**20,tensor_reserved_mib=torch.cuda.memory_reserved()/2**20,
             peak_tensor_reserved_mib=torch.cuda.max_memory_reserved()/2**20,
             progress_percent=round(100*(epoch+offset/len(train_images))/args.epochs,3),
-            precision=spec['precision'],source_status=str(out/'status.json'),
+            precision=spec['precision'],source_status=rel(out/'status.json'),
             updated_at=time.strftime('%Y-%m-%d %H:%M:%S'),**kw)
         atomic_json(out/'status.json',record)
         atomic_json(out/'progress.json',record)

@@ -1,5 +1,15 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
+\usepackage{iftex}
+\ifXeTeX
+  % XeLaTeX/Tectonic: TeX Gyre Termes is a Times clone with full Vietnamese diacritics for the author names.
+  \usepackage{fontspec}
+  \setmainfont{texgyretermes}[Extension=.otf, UprightFont=*-regular, BoldFont=*-bold,
+    ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+\else
+  \usepackage[T5,T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\fi
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
@@ -19,15 +29,20 @@
 \title{Where Should Resolution Be Preserved? Slicing, Tiled Inference and Heterogeneous Box Fusion for Small Bird Detection}
 
 \author{
-\IEEEauthorblockN{Author One}
-\IEEEauthorblockA{\textit{Department, University}\\
-City, Country\\
-email@domain}
+\IEEEauthorblockN{Vũ Quốc Đạt}
+\IEEEauthorblockA{DE200522\\
+\textit{FPT University}\\
+Da Nang, Vietnam}
 \and
-\IEEEauthorblockN{Author Two}
-\IEEEauthorblockA{\textit{Department, University}\\
-City, Country\\
-email@domain}
+\IEEEauthorblockN{Nguyễn Gia Phúc}
+\IEEEauthorblockA{DE200407\\
+\textit{FPT University}\\
+Da Nang, Vietnam}
+\and
+\IEEEauthorblockN{Ngô Ngọc Trường Sơn}
+\IEEEauthorblockA{DE200399\\
+\textit{FPT University}\\
+Da Nang, Vietnam}
 }
 
 \maketitle

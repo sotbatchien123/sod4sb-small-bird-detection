@@ -17,6 +17,7 @@ import numpy as np
 import torch, torchvision
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
+from paths import rel
 
 ROOT = Path(__file__).resolve().parents[1]
 ANN = ROOT/'data/mva_audited_v1/annotations/split_val_coco.json'
@@ -139,7 +140,7 @@ def main(path):
                   chosen_on_even=pick('even'), its_AP50_on_odd=results[pick('even')]['AP50_odd'])
     print('held-out check:', json.dumps({k: (round(v*100, 1) if isinstance(v, float) else v) for k, v in honest.items()}))
     out = Path(path).with_name(Path(path).name.replace('_raw.npz', '_merge_tune.json'))
-    out.write_text(json.dumps(dict(source=str(path), rules=results, held_out=honest), indent=1), encoding='utf-8')
+    out.write_text(json.dumps(dict(source=rel(path), rules=results, held_out=honest), indent=1), encoding='utf-8')
 
 
 if __name__ == '__main__':

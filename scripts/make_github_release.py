@@ -14,7 +14,7 @@ OUT = ROOT/'github_release'
 
 SCRIPTS = ['amp_recovery', 'atomic_status_io', 'build_donor_bank', 'drone_baseline_data', 'ensemble_wbf', 'error_analysis',
            'eval_sahi_tta', 'export_tta_parts', 'gfl_predict', 'gpu_compat', 'make_report_figures', 'make_submission',
-           'merge_tune', 'sahi_fixed_metrics', 'per_image_bn', 'prepare_fixed50', 'run_qos', 'train_gfl_baseline', 'train_yolo_data_methods',
+           'merge_tune', 'paths', 'sahi_fixed_metrics', 'per_image_bn', 'prepare_fixed50', 'run_qos', 'train_gfl_baseline', 'train_yolo_data_methods',
            'train_yolo_drone', 'training_memory', 'win_qos', 'yolo_pilot_views', 'yolo_scale_views', 'make_github_release']
 FILES = [f'scripts/{s}.py' for s in SCRIPTS] + [
     'scripts/run_test_predictions.ps1', 'scripts/run_submission_after_test.ps1',

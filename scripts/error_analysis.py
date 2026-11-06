@@ -14,6 +14,7 @@ import numpy as np
 import cv2
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
+from paths import rel
 
 ROOT = Path(__file__).resolve().parents[1]
 ANN = ROOT/'data/mva_audited_v1/annotations/split_val_coco.json'
@@ -101,7 +102,7 @@ def analyse(path):
         if kind == 'fp': items.sort(key=lambda t: -t[1][4])  # most confident false positives first
         else: rng.shuffle(items)
         panel(items, OUT/f'{name}_{kind}.png')
-    result = dict(source=str(path), by_size=sizes, best_f1=best)
+    result = dict(source=rel(path), by_size=sizes, best_f1=best)
     (OUT/f'{name}.json').write_text(json.dumps(result, indent=1), encoding='utf-8')
     return name, result
 

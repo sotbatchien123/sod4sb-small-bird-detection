@@ -27,6 +27,7 @@ from ultralytics.utils.ops import non_max_suppression
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 from atomic_status_io import atomic_json
+from paths import rel
 from yolo_scale_views import xyxy
 from yolo_pilot_views import PilotViews, VIEW
 
@@ -196,7 +197,7 @@ def main():
     if anchor_status.exists() and json.loads(anchor_status.read_text()).get('status') != 'complete':
         raise RuntimeError('Anchor pretraining is not complete; wait, or copy best.pt to a frozen path')
     spec = dict(version=4, donor_index_sha256=views.donor_hash, donor_count=len(views.donors), model=args.model, epochs=args.epochs, input=list(VIEW),
-        parent_checkpoint=str(source), parent_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+        parent_checkpoint=rel(source), parent_sha256=hashlib.sha256(source.read_bytes()).hexdigest(),
         parent_epochs=0, annotation_sha256=hashes, limit=args.limit, recipe=recipe,
         implementation_sha256={f:hashlib.sha256((ROOT/'scripts'/f).read_bytes()).hexdigest() for f in ('train_yolo_data_methods.py','yolo_scale_views.py','yolo_pilot_views.py')},
         train_images=len(train_images), samples_per_epoch=epoch_len, val_images=len(val_images), seed=42,
@@ -265,7 +266,7 @@ def main():
             tensor_allocated_mib=torch.cuda.memory_allocated()/2**20,tensor_reserved_mib=torch.cuda.memory_reserved()/2**20,
             peak_tensor_reserved_mib=torch.cuda.max_memory_reserved()/2**20,
             progress_percent=round(100*(epoch+offset/epoch_len)/args.epochs,3),
-            precision=spec['precision'],source_status=str(out/'status.json'),
+            precision=spec['precision'],source_status=rel(out/'status.json'),
             updated_at=time.strftime('%Y-%m-%d %H:%M:%S'),**kw)
         atomic_json(out/'status.json',record)
         if args.publish_status: atomic_json(alias,record)

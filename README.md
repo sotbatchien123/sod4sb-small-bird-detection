@@ -1,5 +1,5 @@
 # SOD4SB
-Author One, Author Two, [Where Should Resolution Be Preserved? Slicing, Tiled Inference and Heterogeneous Box Fusion for Small Bird Detection](paper/main.tex), IEEE-format manuscript, 2026. (PyTorch Code)
+Vũ Quốc Đạt, Nguyễn Gia Phúc, Ngô Ngọc Trường Sơn, [Where Should Resolution Be Preserved? Slicing, Tiled Inference and Heterogeneous Box Fusion for Small Bird Detection](paper/main.tex), IEEE-format manuscript, 2026. (PyTorch Code)
 
 ## Abstract
   Birds in the MVA 2023 Small Object Detection Challenge for Spotting Birds (SOD4SB) occupy a median of 16 pixels in 3840×2160 frames, which makes every choice that touches image resolution decisive. We study where resolution should be preserved: during training, during inference, or in the fusion of complementary detectors. Starting from a YOLOv8-M detector pretrained on Drone2021 and fine-tuned on native-resolution crops, we compare three training-time data strategies (colour augmentation, copy-paste and exhaustive tile sampling, "slicing"), two inference-time strategies (horizontal-flip test-time augmentation and SAHI tiled inference), several box merging rules, and a heterogeneous ensemble with a GFL ResNet-50 FPN detector. Slicing gives the largest single gain (70.2% to 79.3% AP50), whereas SAHI reduces accuracy (79.3% to 67.5%) when full frames are already processed without downscaling. Weighted boxes fusion (WBF) of flipped and unflipped predictions reaches 81.0%, and a single WBF over YOLO, flipped YOLO and GFL reaches 84.5% AP50 on the validation split, because YOLO is stronger on 8–16 px birds and GFL on 32–64 px birds. All YOLO experiments use YOLOv8-M.
@@ -73,7 +73,7 @@ If you find this work useful in your research, please consider citing:
 ```
 @misc{sod4sb2026,
   title  = {Where Should Resolution Be Preserved? Slicing, Tiled Inference and Heterogeneous Box Fusion for Small Bird Detection},
-  author = {Author One and Author Two},
+  author = {Vũ, Quốc Đạt and Nguyễn, Gia Phúc and Ngô, Ngọc Trường Sơn},
   year   = {2026},
   note   = {IEEE-format manuscript}
 }
