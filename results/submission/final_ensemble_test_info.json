@@ -1,0 +1,12 @@
+{
+ "images": 9699,
+ "boxes": 1782137,
+ "images_without_boxes": 0,
+ "rule": "WBF IoU 0.55, weights 1:1:1",
+ "sources": [
+  "reports\\gfl_predict\\gfl_ep38_test_predictions.json",
+  "reports\\sahi_tta\\slicing_m_e30_tta_test_plain_predictions.json",
+  "reports\\sahi_tta\\slicing_m_e30_tta_test_flip_predictions.json"
+ ],
+ "val_AP50_of_rule": 0.845
+}

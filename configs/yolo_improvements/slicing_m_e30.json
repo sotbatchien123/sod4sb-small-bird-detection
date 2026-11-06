@@ -1,0 +1,14 @@
+{
+  "name": "slicing_m_e30",
+  "epochs": 30,
+  "anchor": "work_dirs/yolo_drone_m_pretrain/best.pt",
+  "output": "work_dirs/yolo_improvements/slicing_m_e30",
+  "view_size": [
+    1280,
+    736
+  ],
+  "method": "slicing",
+  "overlap": 0.25,
+  "sampling": "all_tiles_keeping_a_bird_plus_one_clean_background_tile_per_source_per_epoch",
+  "model_size": "m"
+}

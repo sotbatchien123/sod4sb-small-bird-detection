@@ -1,0 +1,23 @@
+{
+  "name": "baseline_m_e30",
+  "epochs": 30,
+  "anchor": "work_dirs/yolo_drone_m_pretrain/best.pt",
+  "output": "work_dirs/yolo_improvements/baseline_m_e30",
+  "view_size": [
+    1280,
+    736
+  ],
+  "method": "augmentation",
+  "photometric_probability": 0.0,
+  "hue_shift": 5,
+  "saturation_range": [
+    0.8,
+    1.2
+  ],
+  "gamma_range": [
+    0.8,
+    1.2
+  ],
+  "model_size": "m",
+  "components": "Baseline: Augmentation arm with photometric_probability 0 \u2014 only the common bird-centred native crop, flip 0.5 and brightness 0.8\u20131.2 shared by every arm; same anchor, batch, schedule (user decision 04/11)"
+}

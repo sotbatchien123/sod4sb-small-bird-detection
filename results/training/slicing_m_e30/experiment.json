@@ -1,0 +1,54 @@
+{
+  "version": 4,
+  "donor_index_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "donor_count": 0,
+  "model": "yolo",
+  "epochs": 30,
+  "input": [
+    1280,
+    736
+  ],
+  "parent_checkpoint": "work_dirs/yolo_drone_m_pretrain/best.pt",
+  "parent_sha256": "25b9ca2cea39a8dfbab1e183f10ae8e4f8a5163fa46158191e4e7b68a8095488",
+  "parent_epochs": 0,
+  "annotation_sha256": {
+    "train": "cfc38262fc792fd90a2d6d87365ba23138e1ccfca2bcd336a1e360be8508334e",
+    "val": "7c865a946449e8eb762c1b8c09582ec6be8b2bbfad0bf884498cae16dc7c3413"
+  },
+  "limit": 0,
+  "recipe": {
+    "name": "slicing_m_e30",
+    "epochs": 30,
+    "anchor": "work_dirs/yolo_drone_m_pretrain/best.pt",
+    "output": "work_dirs/yolo_improvements/slicing_m_e30",
+    "view_size": [
+      1280,
+      736
+    ],
+    "method": "slicing",
+    "overlap": 0.25,
+    "sampling": "all_tiles_keeping_a_bird_plus_one_clean_background_tile_per_source_per_epoch",
+    "model_size": "m"
+  },
+  "implementation_sha256": {
+    "train_yolo_data_methods.py": "a7f8c8483b92bdaa10b6dd3dd51759a256adc16cbcce2b2374bced0c44499088",
+    "yolo_scale_views.py": "aa812c05862d080189066e80d3e0fd6258fd710a88692f8849e871cfc7a636e5",
+    "yolo_pilot_views.py": "1f202a421efa30d4407d335c0b4b98dc863eb95017d5920e7209369e8d6c9db5"
+  },
+  "train_images": 8880,
+  "samples_per_epoch": 31790,
+  "val_images": 879,
+  "seed": 42,
+  "initialization": "Local frozen EMA anchor; fresh AdamW, EMA update count and branch epoch; not scratch training",
+  "optimizer": "AdamW decay excludes bias/norm; reset Adam moments equally across every arm",
+  "schedule": "Continuation cosine 1e-4 to 1e-5; 100-update warmup from 1e-5",
+  "batch": 6,
+  "accumulate": 1,
+  "loss_objective": "Ultralytics batch loss divided by batch size",
+  "BN_policy": "YOLO BatchNorm on physical batch 6; EMA evaluation without recalibration",
+  "precision": "BF16 forward; FP32 loss/assignment and parameters; no GradScaler; eval FP32, TF32 off; deterministic algorithms",
+  "augmentation": "Independent data method in recipe; native 1280x736 views, boxes kept if >=50% of area remains; augmentation/copy_paste one bird-centred view per source, slicing all bird tiles + one clean tile per source; common flip .5 and brightness .8..1.2",
+  "evaluation": "EMA FP32 on native images padded to a multiple of 32; clean COCO maxDets100 primary; original-label100 and clean300 diagnostic",
+  "centernet_collision": "deterministic smallest-box regression priority; structural collisions remain",
+  "limitations": "original image split; scene independence unproven; slicing costs more updates per epoch; paper-guided not exact author recipe"
+}

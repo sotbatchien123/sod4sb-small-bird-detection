@@ -1,0 +1,44 @@
+{
+  "model": "GFL ResNet50 FPN",
+  "initialization": "random; no external weights",
+  "stages": [
+    {
+      "name": "drone",
+      "epochs": 6,
+      "lr": 0.005,
+      "lr_milestones_zero_based": [
+        4,
+        5
+      ]
+    },
+    {
+      "name": "mva",
+      "epochs": 50,
+      "lr": 0.001,
+      "lr_milestones_zero_based": [
+        35,
+        45
+      ],
+      "normalization": "per-image BatchNorm; batch_size=1; running buffers unused; train/eval identical"
+    }
+  ],
+  "image_scale": [
+    2560,
+    1440
+  ],
+  "batch_size": 1,
+  "accumulate": 8,
+  "seed": 42,
+  "source_annotation_sha256": {
+    "drone_train": "121e872a53481fb0b6fe96c8d37bd79b3434bce6f6af4ca279570b45ddd36e36",
+    "drone_val": "3d81e8834c3a3665e55beb7e3a732c298f584655db49cca855acc442d962b5c0",
+    "mva_train": "cfc38262fc792fd90a2d6d87365ba23138e1ccfca2bcd336a1e360be8508334e",
+    "mva_val": "3837630acd35775cdd408b7d214001a130f6a61a428377bc742cdbdbac780121"
+  },
+  "filter_empty_gt": false,
+  "activation_checkpointing": false,
+  "augmentation": "horizontal flip 0.5 only; no slicing, mosaic or TTA",
+  "evaluation": "MVA original 879-image validation after each MVA epoch; COCO AP/AP50/AP75",
+  "checkpoint_selection": "best MVA validation AP50; also report last epoch",
+  "scope": "Local from-scratch baseline, not a reproduction of author COCO-pretrained scores"
+}

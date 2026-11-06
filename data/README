@@ -1,0 +1,32 @@
+Data for SOD4SB
+===============
+
+The images are not redistributed. Download them from the MVA 2023 SOD4SB challenge organisers and place them as:
+
+    mva2023_sod4bird_train/
+        images/                         8,880 training + 879 validation frames, 3840x2160 .jpg
+        annotations/                    official COCO files of the challenge
+    drone2021/                          optional, only for pretraining
+        images/
+        annotations/
+
+What is in this folder
+----------------------
+mva_audited_v1/manifest.json
+    Checksums and the list of changes of the audited labels. The audited annotation files themselves are created
+    locally with
+
+        python scripts/prepare_fixed50.py
+
+    which writes mva_audited_v1/annotations/split_train_coco.json and split_val_coco.json. The only change to the
+    official validation labels is the removal of one exactly duplicated box (2,864 instead of 2,865 boxes).
+
+Splits used in the paper
+------------------------
+    Drone2021 train   51,119 images   55,469 boxes   pretraining
+    Drone2021 val     13,572 images   11,197 boxes   checkpoint of the pretraining run
+    MVA train          8,880 images   26,172 boxes   fine-tuning
+    MVA val (audited)    879 images    2,864 boxes   all results in the paper
+    MVA public test    9,699 images    no labels     one submission file only
+
+load_data.py reads these files (load_annotations, list_images, load_image).

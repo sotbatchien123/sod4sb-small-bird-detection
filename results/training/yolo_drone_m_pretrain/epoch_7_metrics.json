@@ -1,0 +1,28 @@
+{
+  "AP": 0.1769072797260315,
+  "AP50": 0.4457027020700089,
+  "AP75": 0.04494452209393239,
+  "AP_small": 0.1755540444565001,
+  "AP_medium": 0.17347532725930737,
+  "AP_large": 0.15768019886079843,
+  "AR1": 0.22901670090202733,
+  "AR10": 0.31704027864606593,
+  "AR100": 0.32478342413146377,
+  "AR_small": 0.25482625482625487,
+  "AR_medium": 0.4161764705882353,
+  "AR_large": 0.5095454545454545,
+  "train_loss_mean": 2.8588952959002425,
+  "active_seconds": 50018.846897125244,
+  "view_statistics_this_process": {
+    "source_visits": 357833,
+    "object_centred_crops": 288939,
+    "retained_boxes": 335132,
+    "dropped_boxes": 53151,
+    "flips": 178616
+  },
+  "precision": "FP32 TF32 disabled",
+  "annotation_sha256": "3d81e8834c3a3665e55beb7e3a732c298f584655db49cca855acc442d962b5c0",
+  "successful_updates": 59640,
+  "skipped_updates": 0,
+  "peak_gpu_mib": 5014.5
+}

@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "split_changed": false,
+  "splits": {
+    "train": {
+      "original_sha256": "cfc38262fc792fd90a2d6d87365ba23138e1ccfca2bcd336a1e360be8508334e",
+      "clean_sha256": "cfc38262fc792fd90a2d6d87365ba23138e1ccfca2bcd336a1e360be8508334e",
+      "images": 8880,
+      "annotations": 26172,
+      "removed": []
+    },
+    "val": {
+      "original_sha256": "3837630acd35775cdd408b7d214001a130f6a61a428377bc742cdbdbac780121",
+      "clean_sha256": "7c865a946449e8eb762c1b8c09582ec6be8b2bbfad0bf884498cae16dc7c3413",
+      "images": 879,
+      "annotations": 2864,
+      "removed": [
+        {
+          "removed_id": 5704,
+          "kept_id": 5703,
+          "image_id": 1975,
+          "bbox": [
+            1560,
+            1054,
+            20,
+            9
+          ]
+        }
+      ]
+    }
+  }
+}

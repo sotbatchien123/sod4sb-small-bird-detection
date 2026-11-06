@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "model": "YOLOv8-M",
+  "epochs": 10,
+  "input": [
+    1280,
+    736
+  ],
+  "seed": 42,
+  "initialization": "random; no external weights; Drone2021 only",
+  "annotation_sha256": {
+    "train": "121e872a53481fb0b6fe96c8d37bd79b3434bce6f6af4ca279570b45ddd36e36",
+    "val": "3d81e8834c3a3665e55beb7e3a732c298f584655db49cca855acc442d962b5c0"
+  },
+  "train_images": 51119,
+  "val_images": 13572,
+  "limit": 0,
+  "optimizer": "AdamW lr 0.001 to 0.0001 cosine; no bias/norm decay; warmup 100 updates",
+  "batch": 6,
+  "accumulate": 1,
+  "loss_objective": "Ultralytics batch loss divided by batch size",
+  "precision": "BF16 forward; FP32 loss and EMA evaluation; deterministic; TF32 off",
+  "augmentation": "one native-resolution 1280x736 crop per image per epoch: images with birds are cropped to contain one randomly chosen bird at a random position, images without birds uniformly; boxes kept if >=50% of area remains; horizontal flip p=0.5; no resize, paste, mosaic or color augmentation",
+  "evaluation": "original Drone validation at native resolution padded to a multiple of 32; COCO maxDets100; best by AP50-95",
+  "implementation_sha256": {
+    "train_yolo_drone.py": "30f17320a73bc875c522a62bac7891ce1c1feaadc8427f92f5a8723718ed1eb8",
+    "drone_baseline_data.py": "4dccc6bb0d42654a0dec7d582e937e40bb6c9922708f1f6a4c466f92e9d241ea"
+  }
+}

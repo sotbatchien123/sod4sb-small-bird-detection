@@ -1,0 +1,37 @@
+# datasets (download from the organisers)
+mva2023_sod4bird_train/
+mva2023_sod4bird_pub_test/
+mva2023_sod4bird_private_test*
+drone2021/
+data/mva_audited_v1/annotations/
+*.zip
+*.rar
+
+# third-party code installed / cloned at pinned versions
+.yolo-deps/
+third_party/
+.venv*/
+
+# training outputs, checkpoints, predictions (attach checkpoints to a GitHub Release)
+work_dirs/
+reports/
+*.pt
+*.pth
+*.npz
+*_predictions.json
+results/val_predictions*.json
+*.bbox.json
+
+# LaTeX build files
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.bbl
+paper/*.blg
+paper/*.synctex.gz
+
+# misc
+__pycache__/
+*.pyc
+.cache/
+*.log

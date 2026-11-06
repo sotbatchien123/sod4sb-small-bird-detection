@@ -1,0 +1,17 @@
+{
+  "name": "copy_paste_m_e30",
+  "epochs": 30,
+  "anchor": "work_dirs/yolo_drone_m_pretrain/best.pt",
+  "output": "work_dirs/yolo_improvements/copy_paste_m_e30",
+  "view_size": [
+    1280,
+    736
+  ],
+  "method": "copy_paste",
+  "paste_probability": 0.3,
+  "max_patches": 3,
+  "max_donor_side": 96,
+  "patch_margin": 2,
+  "placement_attempts": 20,
+  "model_size": "m"
+}

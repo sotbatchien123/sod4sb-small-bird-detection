@@ -1,0 +1,12 @@
+# Python 3.9. Install torch/torchvision (cu128), ultralytics (into .yolo-deps) and UniverseNet as in README.
+numpy==1.23.5
+Pillow==9.4.0
+matplotlib==3.7.1
+opencv-python==4.7.0.72
+pycocotools==2.0.8
+mmcv==1.6.0  # lite build without CUDA ops: MMCV_WITH_OPS=0
+addict==2.4.0
+PyYAML==6.0.1
+packaging==23.1
+yapf==0.32.0
+terminaltables==3.1.10

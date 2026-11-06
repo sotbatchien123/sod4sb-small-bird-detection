@@ -1,0 +1,22 @@
+{
+  "name": "augmentation_m_e30",
+  "epochs": 30,
+  "anchor": "work_dirs/yolo_drone_m_pretrain/best.pt",
+  "output": "work_dirs/yolo_improvements/augmentation_m_e30",
+  "view_size": [
+    1280,
+    736
+  ],
+  "method": "augmentation",
+  "photometric_probability": 0.8,
+  "hue_shift": 5,
+  "saturation_range": [
+    0.8,
+    1.2
+  ],
+  "gamma_range": [
+    0.8,
+    1.2
+  ],
+  "model_size": "m"
+}

@@ -1,0 +1,19 @@
+{
+ "checkpoint": "work_dirs\\gfl_drone12_mva7_1440\\best_mva.pth",
+ "checkpoint_epoch": 38,
+ "checkpoint_sha256": "788a416af92c5f4cc3d2da793fe40d696264ad53ad0ddf2b539e545a84b1b951",
+ "per_image_bn": true,
+ "image_scale": [
+  2560,
+  1440
+ ],
+ "split": "val",
+ "images": 20,
+ "boxes": 1956,
+ "seconds": 5.882148742675781,
+ "ms_per_image": 294.10743713378906,
+ "AP": 0.5334377015897409,
+ "AP50": 0.9209952612108381,
+ "AP75": 0.5800619231376872,
+ "AP_small": 0.516038325065609
+}
