@@ -83,20 +83,6 @@ KEYWORDS
 """
 
 BACK = r"""
-\section*{CRediT authorship contribution statement}
-% Fill in with the CRediT roles of each author (https://credit.niso.org), e.g.
-% \textbf{Vũ Quốc Đạt:} Investigation, Software. \textbf{Nguyễn Gia Phúc:} ... \textbf{Ngô Ngọc Trường Sơn:} ...
-\textbf{Vũ Quốc Đạt, Nguyễn Gia Phúc, Ngô Ngọc Trường Sơn:} [to be completed by the authors].
-
-\section*{Declaration of competing interest}
-The authors declare that they have no known competing financial interests or personal relationships that could have
-appeared to influence the work reported in this paper.
-
-\section*{Data availability}
-Code, configurations, per-image results and trained weights are available at
-\url{https://github.com/sotbatchien123/sod4sb-small-bird-detection}. The MVA 2023 SOD4SB and Drone2021 images are
-not redistributed and can be obtained from the challenge organisers.
-
 \bibliographystyle{elsarticle-num}
 \bibliography{refs}
 """
@@ -109,13 +95,16 @@ def between(s, a, b):
 title = between(src, r'\title{', '}\n')
 abstract = between(src, r'\begin{abstract}', r'\end{abstract}').strip()
 keywords = between(src, r'\begin{IEEEkeywords}', r'\end{IEEEkeywords}').strip()
-body = src[src.index(r'\end{IEEEkeywords}') + len(r'\end{IEEEkeywords}'):src.index(r'\bibliographystyle{IEEEtran}')]
+body = src[src.index(r'\end{IEEEkeywords}') + len(r'\end{IEEEkeywords}'):src.index('% BACKMATTER')]
+# Funding, competing interest, generative-AI use, data availability: same declarations as the lecturer's Array paper
+backmatter = src[src.index('% BACKMATTER'):src.index(r'\bibliographystyle{IEEEtran}')]
+backmatter = backmatter[backmatter.index('\n') + 1:].rstrip() + '\n'
 
 body = body.replace('\\begin{table}[t]\n', '\\begin{table}[t]\n\\small\n')   # journal tables are smaller than body text
 front = (FRONT.replace('TITLE', title).replace('ABSTRACT', abstract)
          .replace('HIGHLIGHTS', '\n'.join(r'\item ' + tex(h) for h in HIGHLIGHTS))
          .replace('KEYWORDS', ' \\sep '.join(k.strip() for k in keywords.split(','))))
-out = PREAMBLE + '\n' + front + body.rstrip() + '\n' + BACK + '\n\\end{document}\n'
+out = PREAMBLE + '\n' + front + body.rstrip() + '\n\n' + backmatter + BACK + '\n\\end{document}\n'
 assert 'IEEE' not in out.replace('IEEE Conf', '').replace('IEEE/CVF', ''), [l for l in out.splitlines() if 'IEEE' in l][:3]
 (HERE/'main_elsevier.tex').write_bytes(out.encode('utf-8'))
 print('main_elsevier.tex', len(out.splitlines()), 'lines; highlights', [len(h) for h in HIGHLIGHTS])

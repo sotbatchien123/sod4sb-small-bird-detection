@@ -84,8 +84,16 @@ which the two architectures are strong on different bird sizes.
 set) and release code, configurations and per-image results.
 \end{itemize}
 
+The rest of the paper is organized as follows. Section~\ref{sec:related} reviews related works in the literature.
+Section~\ref{sec:method} describes the detectors, the training- and inference-time strategies and the box fusion.
+Section~\ref{sec:experiments} presents the datasets and the experimental setting. Section~\ref{sec:results} reports the
+experimental results, the scale-wise and error analyses, a comparison with a published reference, the development
+process and the limitations. Finally, Section~\ref{sec:conclusion} concludes the paper and outlines future research
+directions.
+
 %=====================================================================
-\section{Related Work}
+\section{Related Works}
+\label{sec:related}
 %=====================================================================
 Bird datasets include wind-farm time-lapse images~\cite{yoshihashi2017windfarm}, airport surveillance
 (AirBirds)~\cite{sun2022airbirds} and drone-mounted cameras (Drone2021)~\cite{fujii2021distant}, which also
@@ -104,8 +112,15 @@ cluster, whereas weighted boxes fusion (WBF)~\cite{solovyev2021wbf} averages the
 The SOD4SB winning solutions combined several detectors~\cite{kondo2023sod4sb,hou2023ensemble}; we isolate the
 contribution of architectural diversity with a scale-wise analysis.
 
+Despite these advances, existing studies rarely examine, under one controlled protocol, at which stage of the
+pipeline resolution should be preserved for tiny objects in 4K frames: in the training samples, in the test-time
+views, or through the fusion of heterogeneous detectors. In particular, the benefit of SAHI is usually reported for
+detectors that downscale their input, and the complementarity of heterogeneous detectors is seldom
+explained by object size. This motivates the present study, which evaluates these stages separately on SOD4SB and
+combines only the components that help.
+
 %=====================================================================
-\section{The Proposed Method}
+\section{Methodology}
 \label{sec:method}
 %=====================================================================
 \begin{figure}[t]
@@ -144,7 +159,13 @@ sources with equal weights.}
 \label{fig:pipeline}
 \end{figure}
 
-\subsection{Problem Formulation}
+\subsection{Overview of the Proposed Approach}
+Fig.~\ref{fig:pipeline} illustrates the overall workflow. The approach consists of two phases: training two
+heterogeneous detectors with resolution-preserving data strategies, and combining their predictions on several
+views of the native-resolution frame by box fusion. Each component was retained only if it improved AP50 in a
+controlled ablation; components that were tried and rejected (colour augmentation, copy-paste, SAHI) are analysed
+in Section~\ref{sec:results}.
+
 Let $I\in\{0,\dots,255\}^{H\times W\times 3}$ be a video frame with $H=2160$ and $W=3840$, and let
 $\mathcal{G}=\{g_j\}_{j=1}^{n}$ be its annotated birds, each an axis-aligned box $g_j=(x_1,y_1,x_2,y_2)$. A detector
 $f$ maps the frame to a set of scored boxes $\mathcal{B}=f(I)=\{(b_i,s_i)\}$ with $b_i\in\mathbb{R}^4$ and
@@ -161,25 +182,26 @@ the horizontal flip $h$, the final system is
 \label{eq:system}
 \end{equation}
 
-\subsection{Framework}
-Fig.~\ref{fig:pipeline} summarises the final system. Each component was retained only if it improved AP50 in a
-controlled ablation; components that were tried and rejected (colour augmentation, copy-paste, SAHI) are analysed
-in Section~\ref{sec:experiments}.
+\subsection{Candidate Detector Architectures}
+Two detectors with different designs and input resolutions are used, so that their errors are as little correlated
+as possible. Both are trained without any downloaded weights: they are first pretrained on Drone2021 and then
+fine-tuned on MVA.
 
-\subsubsection{Detectors and Pretraining}
-\textbf{YOLOv8-M.} We use the Ultralytics YOLOv8-M architecture~\cite{jocher2023yolov8} with one class. It is
+\subsubsection{YOLOv8-M}
+We use the Ultralytics YOLOv8-M architecture~\cite{jocher2023yolov8} with one class. It is
 trained from random initialisation on Drone2021 for 10 epochs; the epoch-7 checkpoint, which has the highest
 Drone2021 validation AP50 (44.6\%), initialises every MVA branch. Each training sample is a native-resolution 1280$\times$736 crop: no
 resizing is applied, so a 12-pixel bird remains 12 pixels.
 
-\textbf{GFL.} The second detector is Generalized Focal Loss (GFL)~\cite{li2020gfl} with a ResNet-50~\cite{he2016resnet}
+\subsubsection{GFL R50-FPN}
+The second detector is Generalized Focal Loss (GFL)~\cite{li2020gfl} with a ResNet-50~\cite{he2016resnet}
 and FPN~\cite{lin2017fpn}, implemented with UniverseNet~\cite{shinya2022usb}. It is trained from random
 initialisation on Drone2021 for 6 epochs and then on MVA, with input 2560$\times$1440 (a 2/3 downscale of the 4K frame),
 batch size one with gradient accumulation over eight images, and per-image batch normalisation, which is used
 identically in training and inference. Of the 50 MVA epochs we use epoch 38, the one with the highest validation
 AP50 (Section~\ref{sec:metrics}).
 
-\subsubsection{Training-Time Data Strategies}
+\subsection{Training-Time Data Strategies}
 All YOLO branches share the same initial weights, optimiser, schedule, batch size and a common augmentation
 (horizontal flip with $p=0.5$ and brightness scaling in $[0.8,1.2]$). They differ only in how crops are produced:
 \begin{itemize}
@@ -192,7 +214,7 @@ training patches) pasted at random positions~\cite{ghiasi2021copypaste}.
 bird-free tile per image, is used in every epoch. This yields 31{,}790 samples per epoch instead of 8{,}880.
 \end{itemize}
 
-\subsubsection{Inference-Time Strategies}
+\subsection{Inference-Time Strategies}
 \label{sec:inference}
 YOLO predictions are made on the full 3840$\times$2160 frame padded to a multiple of 32, with confidence threshold
 0.001 and at most 300 boxes per image.
@@ -206,7 +228,8 @@ We evaluate three corrections: (i) discarding tile boxes that touch an inner til
 (ii) multiplying tile scores by a factor $\alpha<1$, and (iii) keeping a tile box only if it overlaps a full-frame
 box with score $\ge 0.05$.
 
-\subsection{Box Fusion}
+\subsection{Heterogeneous Weighted Boxes Fusion}
+\label{sec:fusion}
 The fusion $\Phi$ in \eqref{eq:system} is weighted boxes fusion (WBF). Let $\mathcal{B}=\bigcup_{m=1}^{M}\mathcal{B}_m$ be the boxes of $M$ sources (models or views). WBF~\cite{solovyev2021wbf}
 visits boxes in decreasing score order and assigns each to the first cluster whose fused box has IoU above
 $\tau$, creating a new cluster otherwise. For a cluster $C$ with members $(b_i,s_i)$, the fused box and score are
@@ -218,23 +241,33 @@ where $w_m$ is the weight of source $m$ and the maximum over an empty set is zer
 equally weighted sources therefore keeps one third of its score, which pushes isolated false positives down the
 ranking. The final system uses $M=3$ sources (YOLO, flipped YOLO, GFL), $w_m=1$ and $\tau=0.55$.
 
-\subsection{Implementation Details}
-YOLO branches are trained for 30 epochs with AdamW~\cite{loshchilov2019adamw} (no decay on biases and
-normalisation), cosine learning rate from $10^{-4}$ to $10^{-5}$ after 100 warm-up updates, batch size 6, BF16
-forward passes with FP32 loss and parameters, and exponential moving average weights for evaluation. Drone2021
-pretraining uses the same recipe with learning rate $10^{-3}$ to $10^{-4}$ for 10 epochs. GFL uses SGD (momentum 0.9,
-weight decay $10^{-4}$), learning rate 0.005 on Drone2021 and 0.001 on MVA with steps at epochs 35 and 45, and FP16
-mixed precision. All experiments run on one RTX 5070 Laptop GPU (8~GB) with seed 42.
+\subsection{Scale-Wise and Error Analysis}
+\label{sec:analysis-method}
+To understand why components help, predictions are also analysed by bird size and by error type. Annotated boxes
+are grouped into buckets of $\sqrt{\text{area}}$ (8--16, 16--32 and 32--64 pixels), and AP50 is computed per bucket
+by restricting the COCO evaluation to that area range. In addition, each model is examined at its best-F1 operating
+point at IoU 0.5, where the numbers of false positives (FP) and false negatives (FN) are counted, and the missed
+birds are cropped and inspected visually.
 
 %=====================================================================
 \section{Experiments}
 \label{sec:experiments}
 %=====================================================================
-\subsection{Datasets}
-Table~\ref{tab:data} lists the data. We train on the official MVA training split and report results on the
-official validation split after removing one exactly duplicated box (2{,}864 instead of 2{,}865 boxes; scores
-change by less than 0.1 point). The public test set (9{,}699 frames) has no released labels; we use it only to
-produce a single submission with the configuration selected on validation.
+\subsection{Data Description}
+To train and evaluate the detectors, two bird datasets are used. MVA 2023 SOD4SB is the primary benchmark, and
+Drone2021 serves as the pretraining source for both detectors. Table~\ref{tab:data} lists the splits.
+
+\subsubsection{MVA 2023 SOD4SB Dataset}
+The SOD4SB challenge dataset~\cite{kondo2023sod4sb} consists of 4K (3840$\times$2160) video frames with a single
+\emph{bird} class; the median bird measures 16 pixels in $\sqrt{\text{area}}$. We train on the official training split
+and report results on the official validation split after removing one exactly duplicated box (2{,}864 instead of
+2{,}865 boxes; scores change by less than 0.1 point). The public test set (9{,}699 frames) has no released labels; we
+use it only to produce a single submission with the configuration selected on validation.
+
+\subsubsection{Drone2021 Dataset}
+Drone2021~\cite{fujii2021distant} contains images of distant birds taken from drone-mounted cameras. Its birds are
+larger than those of MVA (median $\sqrt{\text{area}}$ of 25--31 pixels) and its boxes follow a different annotation convention, so it
+is used only for pretraining and for selecting the pretraining checkpoint.
 
 \begin{table}[t]
 \caption{Datasets used in this work.}
@@ -253,8 +286,43 @@ MVA public test & 9{,}699 & -- & submission only \\
 \end{tabular}
 \end{table}
 
-\subsection{Evaluation Metrics}
-\label{sec:metrics}
+\subsection{Experimental Setting}
+\label{sec:setting}
+All experiments were conducted on one NVIDIA RTX 5070 Laptop GPU (8~GB) with seed 42. YOLO uses the Ultralytics
+model definition with our own PyTorch training loop, and GFL is implemented with UniverseNet (MMDetection). Neither detector uses ImageNet or COCO weights. YOLO
+branches are trained with AdamW~\cite{loshchilov2019adamw} (no decay on biases and normalisation), a cosine learning
+rate after 100 warm-up updates, BF16 forward passes with FP32 loss and parameters, and exponential moving average
+weights for evaluation. GFL uses SGD (momentum 0.9, weight decay $10^{-4}$) and FP16 mixed precision. The two-stage
+training configurations are summarised in Table~\ref{tab:config}.
+
+\begin{table}[t]
+\caption{Two-stage training configuration of each detector.}
+\label{tab:config}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{l>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{2.5cm}}
+\toprule
+ & Stage 1: Drone2021 pretraining & Stage 2: MVA fine-tuning \\
+\midrule
+\multicolumn{3}{l}{\textit{YOLOv8-M}} \\
+Input & \multicolumn{2}{l}{native 1280$\times$736 crops (no resizing)} \\
+Augment. & \multicolumn{2}{l}{h-flip $p{=}0.5$, brightness $[0.8,1.2]$} \\
+Epochs & 10 (epoch 7 kept) & 30 (last epoch) \\
+Batch size & 6 & 6 \\
+Optimiser, LR & AdamW, $10^{-3}\!\to\!10^{-4}$ & AdamW, $10^{-4}\!\to\!10^{-5}$ \\
+\midrule
+\multicolumn{3}{l}{\textit{GFL R50-FPN}} \\
+Input & \multicolumn{2}{l}{full frame resized to 2560$\times$1440} \\
+Augment. & \multicolumn{2}{l}{h-flip $p{=}0.5$} \\
+Epochs & 6 & 50 (epoch 38 kept) \\
+Batch size & 1 ($\times$8 accumulation) & 1 ($\times$8 accumulation) \\
+Optimiser, LR & SGD, 0.005, steps at 4, 5 & SGD, 0.001, steps at 35, 45 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Evaluation metrics.} \label{sec:metrics}
 We use the COCO~\cite{lin2014coco} evaluation with at most 100 detections per image and report three scores.
 AP$_t$ is the area under the precision--recall curve obtained by ranking all predictions by score, where a
 prediction is a true positive if its IoU with a still unmatched annotated box is at least $t$. We report AP50
@@ -268,12 +336,20 @@ their frame. For the scale-wise analysis we also report AP50 per bucket of $\sqr
 MVA use the last (30th) epoch. The GFL checkpoint (epoch 38 of 50) was chosen by MVA validation AP50; its last
 epoch scores 74.2\% instead of 74.9\%, so GFL results are optimistic by about 0.7 points.
 
-\textbf{Selection protocol.} Every choice made on the validation set (checkpoint, inference mode, merging rule and
-ensemble weights) can overfit it. For merging rules and ensembles we therefore also select on odd image indices and
-report on even ones, and vice versa. YOLO checkpoints are not selected (last epoch); the GFL checkpoint is the one
-exception and is not covered by this check.
+%=====================================================================
+\section{Results and Discussion}
+\label{sec:results}
+%=====================================================================
+\subsection{Results on the MVA Validation Set}
 
-\subsection{Main Results}
+\subsubsection{Performance of Individual Detectors}
+The first two rows of Table~\ref{tab:main} compare the two detectors trained without any downloaded weights. GFL
+reaches 74.9\% AP50 and the YOLOv8-M baseline 70.2\%; GFL is also ahead in AP75 (36.3\% vs.\ 25.5\%) and AR100
+(46.6\% vs.\ 43.9\%), although it sees a frame downscaled to 2/3. Training YOLOv8-M with slicing reverses the
+order: it reaches 79.3\% AP50, 38.8\% AP75 and 50.0\% AR100 and becomes the strongest single model. The two detectors
+take a similar time per 4K frame (294 and 337~ms).
+
+\subsubsection{Performance of the Proposed Pipeline}
 Table~\ref{tab:main} traces the final pipeline. Slicing contributes the largest gain, flip TTA with WBF adds 1.7
 points, and the heterogeneous ensemble adds 3.5 points. AP75 grows from 25.5\% to 45.8\% and AR100 from 43.9\% to
 53.4\%, i.e. the pipeline improves localisation as well as recall. Fig.~\ref{fig:progress} shows the same progression.
@@ -302,9 +378,6 @@ YOLOv8-M baseline & 70.2 & 25.5 & 43.9 & 338 \\
 \caption{AP50 after each step of the final pipeline.}
 \label{fig:progress}
 \end{figure}
-
-\subsection{Further Analysis}
-This section examines each design choice in turn.
 
 \subsubsection{Training-Time Ablation}
 Table~\ref{tab:train} compares the data strategies. Colour augmentation does not help ($-0.2$): the frames already
@@ -379,11 +452,9 @@ SAHI, $z=1.0$ (16) & NMS 0.6 & 78.5 & 38.0 & 50.2 & 963 \\
 \end{tabular}
 \end{table}
 
-\subsubsection{Fusion Strategies}
+\subsubsection{Configuration Ablation of the Fusion}
 Table~\ref{tab:fusion} compares ways of combining the two YOLO views with GFL. All three reach 84.4--84.5\% AP50; the
-one-stage fusion has the best AP75 and AR100 and needs no tuned weights, so it is used for the submission. Its held-out
-check confirms the gain: choosing the rule on one half of the validation set and scoring the other gives 84.1\% and
-84.8\%, against 80.7\% and 81.4\% for flip TTA alone.
+one-stage fusion has the best AP75 and AR100 and needs no tuned weights, so it is used for the submission.
 
 \begin{table}[t]
 \caption{Fusion of YOLO (plain + flip) and GFL (\%).}
@@ -401,7 +472,7 @@ One-stage WBF, 1:1:1 & \textbf{84.5} & \textbf{45.8} & \textbf{53.4} \\
 \end{tabular}
 \end{table}
 
-\subsubsection{Why the Ensemble Works: Scale-Wise Analysis}
+\subsubsection{Scale-Wise Analysis of the Ensemble}
 Table~\ref{tab:scale} and Fig.~\ref{fig:scale} split AP50 by bird size. YOLO is clearly better on 8--16 px birds
 (80.2\% vs.\ 67.4\%), which make up half of the validation set; a likely reason is that YOLO sees them at native
 resolution, whereas GFL works on a frame downscaled to 2/3. GFL is clearly better on 32--64 px birds (72.4\% vs.\
@@ -437,7 +508,7 @@ Ensemble & \textbf{83.5} & \textbf{89.4} & \textbf{72.4} & \textbf{53.4} & \text
 \label{fig:scale}
 \end{figure}
 
-\subsubsection{Remaining Errors}
+\subsubsection{Error Analysis}
 \label{sec:errors}
 Fig.~\ref{fig:fn} shows false negatives of the YOLO model. Most misses are birds camouflaged in grass or foliage,
 birds on wires and poles, and birds against dark or over-exposed backgrounds; a few are barely visible even to a
@@ -452,21 +523,49 @@ plateau of the 32--64 px bucket across all YOLO variants.
 \label{fig:fn}
 \end{figure}
 
-\subsection{Limitations}
-\label{sec:limits}
-First, slicing changes two factors at once: it covers every bird in every epoch and it produces 3.6 times more
-samples, hence more optimiser updates, than the other branches. Our ablation does not separate the two; a
-compute-matched baseline is left for future work. Second, all comparisons use a single seed, and the GFL checkpoint was chosen on the validation set (about 0.7 AP50
-above its last epoch), which slightly favours GFL and the ensemble. Third, validation
-frames come from the same videos as training frames, so scene-level generalisation is not measured, and the public
-test score was not available to us at the time of writing.
+\subsection{Validation on Held-Out Halves}
+\label{sec:heldout}
+Every choice made on the validation set (checkpoint, inference mode, merging rule and ensemble weights) can overfit
+it. For merging rules and ensembles we therefore also select on odd image indices and report on even ones, and vice
+versa. YOLO checkpoints are not selected (last epoch); the GFL checkpoint is the one exception and is not covered by
+this check. The held-out check confirms the gain of the fusion: choosing the rule on one half of the validation set and
+scoring the other gives 84.1\% and 84.8\% AP50 for the ensemble, against 80.7\% and 81.4\% for flip TTA alone. The
+improvement of about 3.4 points is therefore not an artefact of selecting the merging rule on the same images.
 
-%=====================================================================
-\section{Development Process and Practical Challenges}
+\subsection{Comparison with a Published Reference}
+\label{sec:comparison}
+Table~\ref{tab:compare} compares the proposed pipeline with the GFL checkpoint released with the challenge
+baseline~\cite{kondo2023sod4sb,shinya2022usb}, evaluated with our code on the same 879 validation frames and audited
+labels. The reference is initialised from COCO-pretrained weights and processes full 3840$\times$2160 frames with flip
+TTA, whereas our detectors use no downloaded weights. Under this handicap the proposed pipeline is 4.4 points lower in
+AP50 and 0.8 points lower in AR100, but 1.6 points higher in AP75, i.e.\ the boxes it finds are more tightly
+localised. By size, the gap in AP50 is largest for 32--64~px birds (72.4\% vs.\ 83.4\%), where the reference benefits
+from its larger input and its pretraining, and smallest for 8--16~px birds (83.5\% vs.\ 86.8\%), where preserving the
+native resolution matters most. Results of other challenge entries are reported on the public and private test sets
+with different pretraining and are therefore not directly comparable.
+
+\begin{table}[t]
+\caption{Comparison with the released challenge-baseline GFL on MVA validation (\%).}
+\label{tab:compare}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{llccc}
+\toprule
+Method & Init.\ / input & AP50 & AP75 & AR100 \\
+\midrule
+Released GFL + flip~\cite{kondo2023sod4sb} & COCO / 3840 & \textbf{88.9} & 44.2 & \textbf{54.2} \\
+Ours: GFL R50-FPN & none / 2560 & 74.9 & 36.3 & 46.6 \\
+Ours: YOLO slicing & none / 3840 & 79.3 & 38.8 & 50.0 \\
+Ours: one-stage WBF & none / both & 84.5 & \textbf{45.8} & 53.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Development Process and Practical Challenges}
 \label{sec:process}
-%=====================================================================
 The project ran for about seven weeks, from mid-September to 6 November 2026, on a single laptop GPU (RTX 5070 Laptop,
-8~GB, Blackwell architecture). Table~\ref{tab:timeline} summarises the phases. This section reports the route that led
+8~GB, Blackwell architecture). Table~\ref{tab:timeline} summarises the phases. This subsection reports the route that led
 to the final system, including the branches that were abandoned, because several of the design choices of
 Section~\ref{sec:method} were forced by these constraints rather than chosen freely.
 
@@ -494,7 +593,7 @@ Period & Work & Outcome \\
 \end{tabular}
 \end{table}
 
-\subsection{Pipeline Verification}
+\subsubsection{Pipeline Verification}
 Before any training, the inference and evaluation code was checked against a published number. The GFL checkpoint
 released with the challenge baseline~\cite{kondo2023sod4sb,shinya2022usb}, which is initialised from COCO-pretrained
 weights and processes full 3840$\times$2160 frames, reproduces its reported 47.0\% AP and 88.9\% AP50 (with flip TTA) on the same
@@ -503,7 +602,7 @@ start of the project; this explains most of the gap to that reference and is the
 compared with challenge entries. A GFL trained from scratch on MVA alone reached only 6.1\% AP50 after one epoch, which
 led us to pretrain both detectors on Drone2021.
 
-\subsection{Challenges and How They Were Addressed}
+\subsubsection{Challenges and How They Were Addressed}
 \textbf{A new GPU with old libraries.} The Blackwell GPU (compute capability 12.0) requires PyTorch 2.7 with CUDA 12.8,
 for which no binary build of MMCV~1.6, the basis of the GFL code, exists. We used the pure-Python MMCV with a small
 compatibility layer that replaces its CUDA operators by torchvision NMS, and verified it on six NMS test cases of 1{,}200
@@ -546,14 +645,24 @@ tested on the CPU; the combined recipe was started on free cloud T4 GPUs, but bo
 Instead, the remaining time went into inference-time methods and the heterogeneous ensemble, which need no further
 training. A missing plain YOLOv8-M baseline was noticed late and trained before the ablation was considered complete.
 
-\subsection{Lessons}
+\subsubsection{Lessons}
 Three lessons transfer to similar projects. First, verify the evaluation code against a published checkpoint before
 training anything. Second, with small batches, check batch normalisation explicitly: a train/test mismatch can look
 like overfitting. Third, on a single consumer GPU, resumable training with verified exact resumption and pinned code is
 worth its cost, because interruptions are the rule rather than the exception.
 
+\subsection{Limitations}
+\label{sec:limits}
+First, slicing changes two factors at once: it covers every bird in every epoch and it produces 3.6 times more
+samples, hence more optimiser updates, than the other branches. Our ablation does not separate the two; a
+compute-matched baseline is left for future work. Second, all comparisons use a single seed, and the GFL checkpoint was chosen on the validation set (about 0.7 AP50
+above its last epoch), which slightly favours GFL and the ensemble. Third, validation
+frames come from the same videos as training frames, so scene-level generalisation is not measured, and the public
+test score was not available to us at the time of writing.
+
 %=====================================================================
 \section{Conclusion}
+\label{sec:conclusion}
 %=====================================================================
 We studied where resolution should be preserved for detecting tiny birds in 4K frames. Exhaustive native-resolution
 tile sampling during training is the most effective single change. Tiled inference with SAHI is redundant, and
@@ -564,25 +673,23 @@ coverage and update count in slicing, and target camouflaged birds, which domina
 
 \backmatter
 
-\bmhead{Supplementary information}
-Per-image predictions, per-epoch metrics and every result table are provided in the code repository
-(Code availability).
+\bmhead{Funding}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit
+sectors.
 
-\section*{Declarations}
+\bmhead{Declaration of Competing Interest}
+The authors declare that they have no known competing financial interests or personal relationships that could have
+appeared to influence the work reported in this paper.
 
-\begin{itemize}
-\item \textbf{Funding:} [to be completed by the authors].
-\item \textbf{Conflict of interest/Competing interests:} The authors declare that they have no known competing
-financial interests or personal relationships that could have appeared to influence the work reported in this paper.
-\item \textbf{Ethics approval and consent to participate:} Not applicable.
-\item \textbf{Consent for publication:} Not applicable.
-\item \textbf{Data availability:} The MVA 2023 SOD4SB and Drone2021 images are not redistributed and can be obtained
-from the challenge organisers; the audited label manifest is included in the code repository.
-\item \textbf{Materials availability:} Not applicable.
-\item \textbf{Code availability:} Code, configurations, per-image results and trained weights are available at
-\url{https://github.com/sotbatchien123/sod4sb-small-bird-detection}.
-\item \textbf{Author contribution:} [to be completed by the authors].
-\end{itemize}
+\bmhead{Declaration of Generative AI and AI-Assisted Technologies in the Writing Process}
+During the preparation of this work, the authors used generative AI tools to assist with writing code and to improve
+the grammar and wording of the manuscript. After using these tools, the authors reviewed and edited the content as
+needed and take full responsibility for the content of the publication.
+
+\bmhead{Data and Code Availability}
+Code, configurations, per-image results and trained weights are available at
+\url{https://github.com/sotbatchien123/sod4sb-small-bird-detection}. The MVA 2023 SOD4SB and Drone2021 images are
+not redistributed and can be obtained from the challenge organisers.
 
 \bibliography{refs}
 

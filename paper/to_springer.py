@@ -59,28 +59,6 @@ FRONT = r"""\title[Where Should Resolution Be Preserved?]{TITLE}
 """
 
 BACK = r"""
-\backmatter
-
-\bmhead{Supplementary information}
-Per-image predictions, per-epoch metrics and every result table are provided in the code repository
-(Code availability).
-
-\section*{Declarations}
-
-\begin{itemize}
-\item \textbf{Funding:} [to be completed by the authors].
-\item \textbf{Conflict of interest/Competing interests:} The authors declare that they have no known competing
-financial interests or personal relationships that could have appeared to influence the work reported in this paper.
-\item \textbf{Ethics approval and consent to participate:} Not applicable.
-\item \textbf{Consent for publication:} Not applicable.
-\item \textbf{Data availability:} The MVA 2023 SOD4SB and Drone2021 images are not redistributed and can be obtained
-from the challenge organisers; the audited label manifest is included in the code repository.
-\item \textbf{Materials availability:} Not applicable.
-\item \textbf{Code availability:} Code, configurations, per-image results and trained weights are available at
-\url{https://github.com/sotbatchien123/sod4sb-small-bird-detection}.
-\item \textbf{Author contribution:} [to be completed by the authors].
-\end{itemize}
-
 \bibliography{refs}
 """
 
@@ -92,14 +70,19 @@ def between(s, a, b):
 title = between(src, r'\title{', '}\n')
 abstract = between(src, r'\begin{abstract}', r'\end{abstract}').strip()
 keywords = between(src, r'\begin{IEEEkeywords}', r'\end{IEEEkeywords}').strip()
-body = src[src.index(r'\end{IEEEkeywords}') + len(r'\end{IEEEkeywords}'):src.index(r'\bibliographystyle{IEEEtran}')]
+body = src[src.index(r'\end{IEEEkeywords}') + len(r'\end{IEEEkeywords}'):src.index('% BACKMATTER')]
+# Funding, competing interest, generative-AI use, data availability: same declarations as the lecturer's Array paper.
+# sn-jnl: unnumbered back-matter headings are \bmhead after \backmatter.
+backmatter = src[src.index('% BACKMATTER'):src.index(r'\bibliographystyle{IEEEtran}')]
+backmatter = backmatter[backmatter.index('\n') + 1:].rstrip() + '\n'
+backmatter = '\\backmatter\n\n' + backmatter.replace('\\section*{', '\\bmhead{')
 
 # single-column page: column-wide graphics would span the whole text width
 body = body.replace(r'\includegraphics[width=\columnwidth]', r'\includegraphics[width=0.75\textwidth]')
 body = body.replace(r'\resizebox{\columnwidth}{!}', r'\resizebox{0.85\textwidth}{!}')
 
 front = FRONT.replace('TITLE', title).replace('ABSTRACT', abstract).replace('KEYWORDS', keywords)
-out = PREAMBLE + '\n' + front + body.rstrip() + '\n' + BACK + '\n\\end{document}\n'
+out = PREAMBLE + '\n' + front + body.rstrip() + '\n\n' + backmatter + BACK + '\n\\end{document}\n'
 bad = [l for l in out.splitlines() if 'IEEE' in l and 'IEEE Conf' not in l and 'IEEE/CVF' not in l]
 assert not bad, bad[:3]
 (HERE/'main_springer.tex').write_bytes(out.encode('utf-8'))
