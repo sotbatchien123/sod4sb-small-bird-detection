@@ -1,0 +1,27 @@
+{
+ "baseline": {
+  "file": "baseline_m_e30_full_predictions.json",
+  "sha256": "b2143495248723fbdc8263712cc73e2aeb024c53c3e0f568221886a570e3a516",
+  "boxes": 110072
+ },
+ "slicing": {
+  "file": "slicing_m_e30_full_predictions.json",
+  "sha256": "c498c9a8f5b616a12928b2d34bcea29390c7a115c9ef097b0de32ec2ef420142",
+  "boxes": 53827
+ },
+ "plain": {
+  "file": "slicing_m_e30_tta_plain_predictions.json",
+  "sha256": "d6d57238fadf32955add414164b34f5aa551dd0611a296c5b2ae02afa9a1cc77",
+  "boxes": 53854
+ },
+ "flip": {
+  "file": "slicing_m_e30_tta_flip_predictions.json",
+  "sha256": "ddbfb001dbd62df447ecf66623618c77c06f0364184417b5ff978e4d4e49a9c2",
+  "boxes": 51198
+ },
+ "gfl": {
+  "file": "mva_epoch_38.bbox.json",
+  "sha256": "5ccdb916084d28bbc9b1a567d0d73f56993291442427216c7763508d44244300",
+  "boxes": 86887
+ }
+}

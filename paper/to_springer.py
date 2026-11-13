@@ -11,7 +11,7 @@ both files next to this script; they are git-ignored.
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-src = (HERE/'main.tex').read_bytes().decode('utf-8')
+src = (HERE/'main.tex').read_bytes().decode('utf-8').replace('\r\n', '\n')   # git may check out CRLF on Windows
 for f in ('sn-jnl.cls', 'sn-mathphys-num.bst'):
     if not (HERE/f).exists():
         print(f'note: {f} missing - copy it from the Springer Nature template package before compiling')
@@ -48,6 +48,7 @@ FRONT = r"""\title[Where Should Resolution Be Preserved?]{TITLE}
 \author[1]{\sur{Vũ} \fnm{Quốc Đạt}}\email{qd130506@gmail.com}
 \author[1]{\sur{Nguyễn} \fnm{Gia Phúc}}\email{phucoik@gmail.com}
 \author*[1]{\sur{Ngô} \fnm{Ngọc Trường Sơn}}\email{truongsonks2006@gmail.com}
+\author[1]{\sur{Phan} \fnm{Thị Thu Hồng}}\email{[email]}
 
 \affil*[1]{\orgname{FPT University}, \orgaddress{\city{Da Nang}, \country{Vietnam}}}
 

@@ -7,7 +7,7 @@ change. Re-run after every edit of main.tex:
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-src = (HERE/'main.tex').read_bytes().decode('utf-8')
+src = (HERE/'main.tex').read_bytes().decode('utf-8').replace('\r\n', '\n')   # git may check out CRLF on Windows
 
 HIGHLIGHTS = [   # Elsevier: 3-5 bullets, at most 85 characters each (spaces included)
     'Exhaustive tile sampling (slicing) lifts YOLOv8-M from 70.2% to 79.3% AP50',
@@ -63,6 +63,8 @@ FRONT = r"""\begin{frontmatter}
 \author[fpt]{Ngô Ngọc Trường Sơn\corref{cor1}}
 \cortext[cor1]{Corresponding author.}
 \ead{truongsonks2006@gmail.com}
+\author[fpt]{Phan Thị Thu Hồng}
+\ead{[email]}
 \affiliation[fpt]{organization={FPT University},
             city={Da Nang},
             country={Vietnam}}

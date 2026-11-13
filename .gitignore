@@ -21,6 +21,8 @@ reports/
 *_predictions.json
 results/val_predictions*.json
 *.bbox.json
+# exception: the saved validation predictions read by notebooks/results_and_verification.ipynb
+!results/verification/val_predictions.npz
 
 # LaTeX build files
 paper/*.aux

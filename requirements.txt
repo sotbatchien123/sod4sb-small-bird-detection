@@ -2,6 +2,7 @@
 numpy==1.23.5
 Pillow==9.4.0
 matplotlib==3.7.1
+pandas==2.3.3  # notebooks
 opencv-python==4.7.0.72
 pycocotools==2.0.8
 mmcv==1.6.0  # lite build without CUDA ops: MMCV_WITH_OPS=0
